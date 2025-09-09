@@ -1,5 +1,16 @@
 # whisper.cpp
 
+```bash
+models/download-ggml-model.sh large-v3-turbo-q5_0
+
+cmake -B build
+cmake --build build -j --config Release
+
+# transcribe an audio file
+ffmpeg -i samples/ru-only.m4a -ar 16000 -ac 1 -c:a pcm_s16le samples/output.wav
+./build/bin/whisper-cli --model models/ggml-large-v3-turbo-q5_0.bin -f samples/output.wav -oj -ojf -ps -pc --print-confidence -l ro
+```
+
 ![whisper.cpp](https://user-images.githubusercontent.com/1991296/235238348-05d0f6a4-da44-4900-a1de-d0707e75b763.jpeg)
 
 [![Actions Status](https://github.com/ggml-org/whisper.cpp/workflows/CI/badge.svg)](https://github.com/ggml-org/whisper.cpp/actions)
@@ -325,16 +336,19 @@ cmake --build build -j --config Release
 ```
 
 or for newer NVIDIA GPU's (RTX 5000 series):
+
 ```
 cmake -B build -DGGML_CUDA=1 -DCMAKE_CUDA_ARCHITECTURES="86"
 cmake --build build -j --config Release
 ```
 
 ## Vulkan GPU support
+
 Cross-vendor solution which allows you to accelerate workload on your GPU.
 First, make sure your graphics card driver provides support for Vulkan API.
 
 Now build `whisper.cpp` with Vulkan support:
+
 ```
 cmake -B build -DGGML_VULKAN=1
 cmake --build build -j --config Release
@@ -359,9 +373,9 @@ Ascend NPU provides inference acceleration via [`CANN`](https://www.hiascend.com
 First, check if your Ascend NPU device is supported:
 
 **Verified devices**
-| Ascend NPU                    | Status  |
+| Ascend NPU | Status |
 |:-----------------------------:|:-------:|
-| Atlas 300T A2                 | Support |
+| Atlas 300T A2 | Support |
 
 Then, make sure you have installed [`CANN toolkit`](https://www.hiascend.com/en/software/cann/community) . The lasted version of CANN is recommanded.
 
@@ -378,7 +392,7 @@ Run the inference examples as usual, for example:
 ./build/bin/whisper-cli -f samples/jfk.wav -m models/ggml-base.en.bin -t 8
 ```
 
-*Notes:*
+_Notes:_
 
 - If you have trouble with Ascend NPU device, please create a issue with **[CANN]** prefix/tag.
 - If you run successfully with your Ascend NPU device, please help update the table `Verified devices`.
@@ -707,6 +721,7 @@ For more details, see the conversion script [models/convert-pt-to-ggml.py](model
 - [x] Unity: [macoron/whisper.unity](https://github.com/Macoron/whisper.unity)
 
 ## XCFramework
+
 The XCFramework is a precompiled version of the library for iOS, visionOS, tvOS,
 and macOS. It can be used in Swift projects without the need to compile the
 library from source. For example, the v1.7.5 version of the XCFramework can be
@@ -736,6 +751,7 @@ let package = Package(
 ```
 
 ## Voice Activity Detection (VAD)
+
 Support for Voice Activity Detection (VAD) can be enabled using the `--vad`
 argument to `whisper-cli`. In addition to this option a VAD model is also
 required.
@@ -750,10 +766,12 @@ transcription process.
 The following VAD models are currently supported:
 
 ### Silero-VAD
+
 [Silero-vad](https://github.com/snakers4/silero-vad) is a lightweight VAD model
 written in Python that is fast and accurate.
 
 Models can be downloaded by running the following command on Linux or MacOS:
+
 ```console
 $ ./models/download-vad-model.sh silero-v5.1.2
 Downloading ggml model silero-v5.1.2 from 'https://huggingface.co/ggml-org/whisper-vad' ...
@@ -764,7 +782,9 @@ You can now use it like this:
   $ ./build/bin/whisper-cli -vm /path/models/ggml-silero-v5.1.2.bin --vad -f samples/jfk.wav -m models/ggml-base.en.bin
 
 ```
+
 And the following command on Windows:
+
 ```console
 > .\models\download-vad-model.cmd silero-v5.1.2
 Downloading vad model silero-v5.1.2...
@@ -779,13 +799,16 @@ To see a list of all available models, run the above commands without any
 arguments.
 
 This model can be also be converted manually to ggml using the following command:
+
 ```console
 $ python3 -m venv venv && source venv/bin/activate
 $ (venv) pip install silero-vad
 $ (venv) $ python models/convert-silero-vad-to-ggml.py --output models/silero.bin
 Saving GGML Silero-VAD model to models/silero-v5.1.2-ggml.bin
 ```
+
 And it can then be used with whisper as follows:
+
 ```console
 $ ./build/bin/whisper-cli \
    --file ./samples/jfk.wav \
@@ -796,27 +819,27 @@ $ ./build/bin/whisper-cli \
 
 ### VAD Options
 
-* --vad-threshold: Threshold probability for speech detection. A probability
-for a speech segment/frame above this threshold will be considered as speech.
+- --vad-threshold: Threshold probability for speech detection. A probability
+  for a speech segment/frame above this threshold will be considered as speech.
 
-* --vad-min-speech-duration-ms: Minimum speech duration in milliseconds. Speech
-segments shorter than this value will be discarded to filter out brief noise or
-false positives.
+- --vad-min-speech-duration-ms: Minimum speech duration in milliseconds. Speech
+  segments shorter than this value will be discarded to filter out brief noise or
+  false positives.
 
-* --vad-min-silence-duration-ms: Minimum silence duration in milliseconds. Silence
-periods must be at least this long to end a speech segment. Shorter silence
-periods will be ignored and included as part of the speech.
+- --vad-min-silence-duration-ms: Minimum silence duration in milliseconds. Silence
+  periods must be at least this long to end a speech segment. Shorter silence
+  periods will be ignored and included as part of the speech.
 
-* --vad-max-speech-duration-s: Maximum speech duration in seconds. Speech segments
-longer than this will be automatically split into multiple segments at silence
-points exceeding 98ms to prevent excessively long segments.
+- --vad-max-speech-duration-s: Maximum speech duration in seconds. Speech segments
+  longer than this will be automatically split into multiple segments at silence
+  points exceeding 98ms to prevent excessively long segments.
 
-* --vad-speech-pad-ms: Speech padding in milliseconds. Adds this amount of padding
-before and after each detected speech segment to avoid cutting off speech edges.
+- --vad-speech-pad-ms: Speech padding in milliseconds. Adds this amount of padding
+  before and after each detected speech segment to avoid cutting off speech edges.
 
-* --vad-samples-overlap: Amount of audio to extend from each speech segment into
-the next one, in seconds (e.g., 0.10 = 100ms overlap). This ensures speech isn't
-cut off abruptly between segments when they're concatenated together.
+- --vad-samples-overlap: Amount of audio to extend from each speech segment into
+  the next one, in seconds (e.g., 0.10 = 100ms overlap). This ensures speech isn't
+  cut off abruptly between segments when they're concatenated together.
 
 ## Examples
 
